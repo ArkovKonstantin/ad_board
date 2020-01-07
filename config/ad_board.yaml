@@ -1,0 +1,8 @@
+postgres:
+  database: ad_board
+  user: ad_board_user
+  password: ad_board_pass
+  host: localhost
+  port: 5433
+  minsize: 1
+  maxsize: 5
