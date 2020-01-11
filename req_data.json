@@ -1,11 +1,10 @@
 {
-  "name": 123,
+  "name": "w",
   "description": "a",
   "price": 123,
   "images": [
     "image1",
     "image2",
-    "image3",
-    "image4"
+    "image3"
   ]
 }

@@ -38,18 +38,37 @@ async def post_list(request):
     sql_query = db.posts.select()
     sql_query = filter(request, sql_query)
     sql_query = paginate(request, sql_query, response_data)
+
     async with request.app['db'].acquire() as conn:
         cursor = await conn.execute(sql_query)
         records = await cursor.fetchall()
-        # response_data['results'] = [dict(p) for p in records]
-    return web.json_response(response_data)
+        response_data['results'] = [dict(p) for p in records]
+    return web.Response(content_type='application/json',
+                        text=json.dumps(response_data, default=str))
+
+
+async def single_post(request):
+    optional_fields = request.query.get('fields', None)
+    fields = ['name', 'price']
+    if optional_fields is not None:
+        fields.extend(optional_fields.split(','))
+    post_id = int(request.match_info.get('id'))
+    async with request.app['db'].acquire() as conn:
+        cursor = await conn.execute(db.posts.select().where(db.posts.c.id == post_id))
+        record = dict(await cursor.fetchone())
+        try:
+            response_data = dict((f, record[f]) for f in fields)
+        except KeyError:
+            return web.HTTPBadRequest()
+        if not response_data.get('images', False):
+            response_data['images'] = record['images'][0:1]
+
+    return web.Response(content_type='application/json',
+                        text=json.dumps(response_data, default=str))
 
 
 async def create_post(request):
-    # form = request.post()
     data = await request.json()
-    print('DATA')
-    print(data)
 
     v = Draft3Validator(schema, format_checker=FormatChecker())
     if v.is_valid(data):
@@ -64,8 +83,6 @@ async def create_post(request):
     else:
         print('data not valid')
         print()
-        # print(list((type(err.path), err.path.pop())
-        #            for err in v.iter_errors(data)))
         response_data = {'errors': dict((err.path.pop(), err.message)
                                         for err in v.iter_errors(data))}
         return web.HTTPBadRequest(body=json.dumps(response_data),
