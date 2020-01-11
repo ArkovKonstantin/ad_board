@@ -1,0 +1,11 @@
+{
+  "name": 123,
+  "description": "a",
+  "price": 123,
+  "images": [
+    "image1",
+    "image2",
+    "image3",
+    "image4"
+  ]
+}

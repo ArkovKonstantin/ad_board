@@ -15,9 +15,12 @@ def sample_data(engine):
     conn = engine.connect()
 
     conn.execute(posts.insert(), [
-        {'name': 'camera', 'description': 'sony', 'price': 1000},
-        {'name': 'phone', 'description': 'nokia3310', 'price': 500},
-        {'name': 'auto', 'description': 'lada', 'price': 2000},
+        {'name': 'camera', 'description': 'sony', 'price': 1000, 'images':
+            ['image1', 'image2', 'image3']},
+        {'name': 'phone', 'description': 'nokia3310', 'price': 500, 'images':
+            ['image4', 'image5', 'image6']},
+        {'name': 'auto', 'description': 'lada', 'price': 2000, 'images':
+            ['image7', 'image8', 'image9']}
     ])
     conn.close()
 

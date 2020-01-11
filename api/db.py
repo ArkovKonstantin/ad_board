@@ -3,18 +3,18 @@ from datetime import datetime as dt
 from sqlalchemy import (
     MetaData, Table, Column, ForeignKey,
     Integer, String, Date,
-    DateTime)
+    DateTime, ARRAY, Text)
 
 meta = MetaData()
 posts = Table(
     'posts', meta,
 
-    Column('id', Integer, primary_key=True),
+    Column('id', Integer, primary_key=True, autoincrement=True),
     Column('name', String(200)),
     Column('description', String(1000)),
-    Column('price', Integer)
-    # TODO column image list
-    # Column('image', String), не больше 3 ех фото
+    Column('price', Integer),
+    Column('images', ARRAY(String(200))),
+    Column('pub_data', DateTime, index=True, default=dt.utcnow())
 )
 
 
