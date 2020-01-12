@@ -19,6 +19,7 @@ def paginate(request, sql_query, response_data, limit=10):
     return sql_query.limit(limit).offset(offset)
 
 
+# TODO raise except
 # /api/v1/posts?filter[col]=(asc|desc)
 def filter(request, sql_query):
     args = []
@@ -33,20 +34,51 @@ def filter(request, sql_query):
     return sql_query.order_by(*args)
 
 
+def redis_cache(cor):
+    async def wrapper(request):
+        timeout = 60
+        print('wrapper')
+        redis = request.app['redis']
+        url = str(request.url)
+        record_exist = await redis.exists(url)
+        if record_exist:
+            print('record_exist')
+            response_data = await redis.get(url, encoding='utf-8')
+            return web.Response(content_type='application/json',
+                                text=response_data)
+        else:
+            print('record does not exists')
+            res = await cor(request)
+            print('res.text')
+            print(res.text)
+            await redis.set(url, res.text)
+            await redis.expire(url, timeout)
+            return res
+
+    return wrapper
+
+
+@redis_cache
 async def post_list(request):
     response_data = {}
     sql_query = db.posts.select()
-    sql_query = filter(request, sql_query)
-    sql_query = paginate(request, sql_query, response_data)
+    try:
+        sql_query = filter(request, sql_query)
+        sql_query = paginate(request, sql_query, response_data)
+    except ValueError:
+        return web.HTTPBadRequest()
 
     async with request.app['db'].acquire() as conn:
         cursor = await conn.execute(sql_query)
         records = await cursor.fetchall()
         response_data['results'] = [dict(p) for p in records]
+        print('response_data')
+        print(response_data)
     return web.Response(content_type='application/json',
                         text=json.dumps(response_data, default=str))
 
 
+@redis_cache
 async def single_post(request):
     optional_fields = request.query.get('fields', None)
     fields = ['name', 'price']

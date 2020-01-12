@@ -4,6 +4,7 @@ from sqlalchemy import (
     MetaData, Table, Column, ForeignKey,
     Integer, String, Date,
     DateTime, ARRAY, Text)
+import aioredis
 
 meta = MetaData()
 posts = Table(
@@ -30,6 +31,19 @@ async def init_pg(app):
         maxsize=conf['maxsize'],
     )
     app['db'] = engine
+
+
+async def init_redis(app):
+    conf = app['config']['redis']
+    redis = await aioredis.create_redis_pool((
+        conf['host'], conf['port']
+    ))
+    app['redis'] = redis
+
+
+async def close_redis(app):
+    app['redis'].close()
+    await app['redis'].wait_closed()
 
 
 async def close_pg(app):
