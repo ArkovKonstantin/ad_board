@@ -3,7 +3,7 @@ schema = {
     'properties': {
         'name': {
             'type': 'string',
-            "maxLength": 2
+            "maxLength": 200
         },
         'description': {
             'type': 'string',

@@ -1,26 +1,27 @@
 import json
 
 from aiohttp import web
-import db
+from api import db
 import math
 from sqlalchemy import desc, asc
-from schema import schema
+from api.schema import schema
 from jsonschema import Draft3Validator, FormatChecker
 
 
-# limit offset approach
 def paginate(request, sql_query, response_data, limit=10):
+    print('req.query')
+    print(type(request.url))
     page = int(request.query.get('page', 1))
     limit = int(request.query.get('limit', limit))
     offset = (page - 1) * limit
-    response_data['next'] = f'{request.url}?page={page + 1}&limit={limit}'
+    response_data['next'] = f'{request.url.scheme}://{request.url.host}' \
+                            f'{request.url.path}?page={page + 1}&limit={limit}'
     if page > 1:
-        response_data['prev'] = f'{request.url}?page={page - 1}&limit={limit}'
+        response_data['prev'] = f'{request.url.scheme}://{request.url.host}' \
+                                f'{request.url.path}?page={page - 1}&limit={limit}'
     return sql_query.limit(limit).offset(offset)
 
 
-# TODO raise except
-# /api/v1/posts?filter[col]=(asc|desc)
 def filter(request, sql_query):
     args = []
     for key in request.query:

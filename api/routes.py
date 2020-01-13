@@ -1,4 +1,4 @@
-from views import post_list, create_post, single_post
+from api.views import post_list, create_post, single_post
 
 
 def setup_routes(app):
