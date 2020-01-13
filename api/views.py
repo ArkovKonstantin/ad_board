@@ -1,16 +1,13 @@
 import json
-
 from aiohttp import web
 from api import db
-import math
 from sqlalchemy import desc, asc
 from api.schema import schema
 from jsonschema import Draft3Validator, FormatChecker
 
 
 def paginate(request, sql_query, response_data, limit=10):
-    print('req.query')
-    print(type(request.url))
+    """Используем sql запрос limit offset для пагинации"""
     page = int(request.query.get('page', 1))
     limit = int(request.query.get('limit', limit))
     offset = (page - 1) * limit
@@ -23,6 +20,7 @@ def paginate(request, sql_query, response_data, limit=10):
 
 
 def filter(request, sql_query):
+    """Обработка переданных параметров в get зпросе"""
     args = []
     for key in request.query:
         if key.startswith('filter'):
@@ -36,22 +34,20 @@ def filter(request, sql_query):
 
 
 def redis_cache(cor):
+    """Сохраненяем GET запрос в Redis, если его там нет, устанавливая ttl.
+    Если запрос уже сохранен возвращем ответ из Redis"""
+
     async def wrapper(request):
         timeout = 60
-        print('wrapper')
         redis = request.app['redis']
         url = str(request.url)
         record_exist = await redis.exists(url)
         if record_exist:
-            print('record_exist')
             response_data = await redis.get(url, encoding='utf-8')
             return web.Response(content_type='application/json',
                                 text=response_data)
         else:
-            print('record does not exists')
             res = await cor(request)
-            print('res.text')
-            print(res.text)
             await redis.set(url, res.text)
             await redis.expire(url, timeout)
             return res
@@ -61,6 +57,8 @@ def redis_cache(cor):
 
 @redis_cache
 async def post_list(request):
+    """Создаем объект запроса sql_query, пердаем его в
+    paginate и filter для обработки. Делаем запорс к базе"""
     response_data = {}
     sql_query = db.posts.select()
     try:
@@ -73,14 +71,13 @@ async def post_list(request):
         cursor = await conn.execute(sql_query)
         records = await cursor.fetchall()
         response_data['results'] = [dict(p) for p in records]
-        print('response_data')
-        print(response_data)
     return web.Response(content_type='application/json',
                         text=json.dumps(response_data, default=str))
 
 
 @redis_cache
 async def single_post(request):
+    """Ищем объявление по переданному id"""
     optional_fields = request.query.get('fields', None)
     fields = ['name', 'price']
     if optional_fields is not None:
@@ -88,7 +85,11 @@ async def single_post(request):
     post_id = int(request.match_info.get('id'))
     async with request.app['db'].acquire() as conn:
         cursor = await conn.execute(db.posts.select().where(db.posts.c.id == post_id))
-        record = dict(await cursor.fetchone())
+        record = await cursor.fetchone()
+        # Если объявления с переданнными id не существует
+        if record is None:
+            return web.HTTPBadRequest()
+        record = dict(record)
         try:
             response_data = dict((f, record[f]) for f in fields)
         except KeyError:
@@ -101,21 +102,17 @@ async def single_post(request):
 
 
 async def create_post(request):
+    """Создание объявления. Для валидации передавемых данных используем jsonschema"""
     data = await request.json()
 
     v = Draft3Validator(schema, format_checker=FormatChecker())
     if v.is_valid(data):
-        print('data is valid')
-        print()
-        print(db.posts.insert().values(**data))
         async with request.app['db'].acquire() as conn:
             cursor = await conn.execute(db.posts.insert().values(**data))
             post_id = await cursor.fetchone()
         return web.HTTPCreated(body=json.dumps({'id': post_id[0]}),
                                content_type='application/json')
     else:
-        print('data not valid')
-        print()
         response_data = {'errors': dict((err.path.pop(), err.message)
                                         for err in v.iter_errors(data))}
         return web.HTTPBadRequest(body=json.dumps(response_data),
