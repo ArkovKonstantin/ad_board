@@ -6,8 +6,10 @@ services:
       POSTGRES_DB: ad_board
       POSTGRES_USER: ad_board_user
       POSTGRES_PASSWORD: ad_board_pass
+    restart: always
   redis:
     image: redis
+    restart: always
   api-server:
     build: .
     command: python -m api.main
@@ -16,3 +18,4 @@ services:
     depends_on:
       - db
       - redis
+    restart: always
