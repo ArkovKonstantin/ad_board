@@ -1,0 +1,18 @@
+version: "3.3"
+services:
+  db:
+    image: postgres:alpine
+    environment:
+      POSTGRES_DB: ad_board
+      POSTGRES_USER: ad_board_user
+      POSTGRES_PASSWORD: ad_board_pass
+  redis:
+    image: redis
+  api-server:
+    build: .
+    command: python -m api.main
+    ports:
+      - 8001:8001
+    depends_on:
+      - db
+      - redis

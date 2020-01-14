@@ -1,7 +1,10 @@
+import time
+
 from sqlalchemy import create_engine, MetaData
 
 from api.settings import config
 from api.db import posts
+from sqlalchemy.exc import OperationalError
 
 DSN = "postgresql://{user}:{password}@{host}:{port}/{database}"
 
@@ -25,9 +28,20 @@ def sample_data(engine):
     conn.close()
 
 
-if __name__ == '__main__':
+def init_db():
     db_url = DSN.format(**config['postgres'])
     engine = create_engine(db_url)
+    retries = 3
+    timeout = 5
+    while retries > 0:
+        try:
+            create_tables(engine)
+            sample_data(engine)
+            return
+        except OperationalError:
+            retries -= 1
+            time.sleep(timeout)
 
-    create_tables(engine)
-    sample_data(engine)
+
+if __name__ == '__main__':
+    init_db()

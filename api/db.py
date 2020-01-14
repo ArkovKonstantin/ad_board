@@ -1,3 +1,6 @@
+import time
+from functools import wraps
+
 import aiopg.sa
 from datetime import datetime as dt
 from sqlalchemy import (
@@ -5,6 +8,8 @@ from sqlalchemy import (
     Integer, String, Date,
     DateTime, ARRAY, Text)
 import aioredis
+from sqlalchemy.exc import OperationalError
+import asyncio
 
 meta = MetaData()
 posts = Table(
@@ -19,8 +24,27 @@ posts = Table(
 )
 
 
+def retry_conn(retries=3, timeout=5):
+    def decor(cor):
+        @wraps(cor)
+        async def wrapper(app):
+            count = 0
+            while count < retries:
+                try:
+                    return await cor(app)
+                except:
+                    count += 1
+                    await asyncio.sleep(timeout)
+
+        return wrapper
+
+    return decor
+
+
+@retry_conn()
 async def init_pg(app):
     conf = app['config']['postgres']
+
     engine = await aiopg.sa.create_engine(
         database=conf['database'],
         user=conf['user'],
@@ -33,8 +57,10 @@ async def init_pg(app):
     app['db'] = engine
 
 
+@retry_conn()
 async def init_redis(app):
     conf = app['config']['redis']
+
     redis = await aioredis.create_redis_pool((
         conf['host'], conf['port']
     ))
