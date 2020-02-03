@@ -20,7 +20,7 @@ posts = Table(
     Column('description', String(1000)),
     Column('price', Integer),
     Column('images', ARRAY(String(200))),
-    Column('pub_data', DateTime, index=True, default=dt.utcnow())
+    Column('pub_date', DateTime, index=True, default=dt.utcnow())
 )
 
 

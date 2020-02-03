@@ -52,8 +52,8 @@ async def test_filter(client):
     await _check('price', 'desc')
     await _check('price', 'asc')
     # Сортировка по дате
-    await _check('pub_data', 'desc')
-    await _check('pub_data', 'asc')
+    await _check('pub_date', 'desc')
+    await _check('pub_date', 'asc')
 
 
 async def test_create_post(client):

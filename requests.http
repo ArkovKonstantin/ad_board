@@ -1,0 +1,15 @@
+###
+GET http://localhost:8001/api/v1/posts
+
+###
+GET http://localhost:8001/api/v1/posts/1
+
+###
+GET http://localhost:8001/api/v1/posts?page=2&limit=1
+###
+GET http://localhost:8001/api/v1/posts?page=3&limit=1
+###
+GET http://localhost:8001/api/v1/posts?filter[pub_date]=desc
+
+###
+GET http://localhost:8001/api/v1/posts/1?fields=images,pub_date,description

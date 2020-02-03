@@ -16,5 +16,4 @@ def init_app():
 
 if __name__ == '__main__':
     app = init_app()
-    init_db()
     web.run_app(app, port=8001)

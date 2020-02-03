@@ -12,7 +12,7 @@ services:
     restart: always
   api-server:
     build: .
-    command: python -m api.main
+    command: sh -c "python init_db.py && python -m api.main"
     ports:
       - 8001:8001
     depends_on:
