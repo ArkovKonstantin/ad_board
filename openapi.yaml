@@ -1,0 +1,141 @@
+openapi: 3.0.1
+info:
+  title: Ad Board API
+  description: Simple API for creating and displaying ads
+  version : 1.0.0
+servers:
+  - url: 'http://localhost:8001/api/v1'
+tags:
+  - name : post
+    description : Operation about post 
+paths:
+  /post:
+    get:
+      tags:
+        - post
+      summary: Return list of posts
+      parameters:
+        - name : page
+          in : query
+          required : false
+          description : number of current page
+          schema:
+            type: integer
+        - name: limit
+          in : query
+          required : false
+          description : number of posts per page
+          schema:
+            type: integer
+        - name: filter[{field}]
+          in: query
+          required: false
+          description: sort results by {filed} in asc or desc order
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            
+      responses:
+        '200':
+          description : Return list of posts
+          content :
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type : array
+                    items:
+                      $ref: '#/components/schemas/Post'
+        '400':
+          description: Bad request
+    post:
+      tags:
+        - post
+      summary: Create new post
+      requestBody:
+        description: Post object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Post'
+        required: true
+      responses:
+        '200':
+          description: Ok
+          content:
+            appliction/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+        '405':
+          description: Invalid input
+          content: {}
+      
+  /post/{postId}:
+    get:
+      tags:
+        - post
+      summary: Find post by ID
+      description: Returns a single post
+      parameters:
+        - name: postId
+          in: path
+          description: ID of post to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: fileds
+          description: Number of additional fields displayed in the response.
+                       By default it is name, price and main image
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - images
+                - pub_date
+                - description
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Post not found
+          content: {}
+      
+components:
+  schemas:
+    Post:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: integer
+          format: int64
+        pub_date:
+          type: string
+          format: date-time
+        images:
+          type: array
+          items:
+            type: string
+            maxItems: 3
+          description: Order Status
+          
