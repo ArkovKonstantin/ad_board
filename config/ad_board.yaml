@@ -9,3 +9,5 @@ postgres:
 redis:
   host: redis
   port: 6379
+posts_per_page: 10
+max_posts_per_page: 50

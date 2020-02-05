@@ -2,11 +2,13 @@ from aiohttp import web
 from api.settings import config
 from api.routes import setup_routes
 from api.db import init_pg, close_pg, init_redis, close_redis
-from init_db import init_db
+from api.middlewares import process_req_param
+import logging
 
 
 def init_app():
-    app = web.Application()
+    app = web.Application(middlewares=[process_req_param])
+    logging.basicConfig(level=logging.DEBUG)
     setup_routes(app)
     app['config'] = config
     app.on_startup.extend([init_pg, init_redis])

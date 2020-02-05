@@ -1,0 +1,13 @@
+postgres:
+  database: ad_board
+  user: ad_board_user
+  password: ad_board_pass
+  host: localhost
+  port: 5433
+  minsize: 1
+  maxsize: 5
+redis:
+  host: localhost
+  port: 6379
+posts_per_page: 10
+max_posts_per_page: 50
