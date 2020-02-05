@@ -57,5 +57,5 @@ async def process_req_param(request, handler):
                         return web.HTTPBadRequest(text=f'{f} field does not exist')
 
             return await handler(request, optional_fields)
-    else:
-        return await handler(request)
+
+    return await handler(request)

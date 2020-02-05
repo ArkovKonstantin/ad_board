@@ -35,7 +35,7 @@ async def test_filter(client):
     """Тестирование фильтрации данных по убыванию и возрастанию"""
 
     async def _check(attr, flag):
-        url = f'/api/v1/posts?filter[{attr}]={flag}'
+        url = f'/api/v1/posts?sort[{attr}]={flag}'
         resp = await client.get(url)
         posts = (json.loads(await resp.text()))['results']
         prev_p = posts[0][attr]
